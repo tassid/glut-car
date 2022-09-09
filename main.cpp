@@ -1,155 +1,81 @@
-#include <GL/glut.h>    // Header File For The GLUT Library 
-#include <GL/gl.h>    // Header File For The OpenGL32 Library
-#include <GL/glu.h>    // Header File For The GLu32 Library
-//#include <unistd.h>     // Header File For sleeping.
+#include <GL/gl.h> 					//biblioteca que permite todas as chamadas da API openGL
+#include <GL/glut.h> 				//bibliotecao que permite a manipulação de janelas
+#include <Math.h>                   //conjunto de funções para operações matemáticas
 
-/* ASCII code for the escape key. */
-#define ESCAPE 27
+GLfloat escala=1;                  // variável para escala
+GLfloat rotacao=0;                 // variável para rotação
+GLfloat movex = 0, movey = 0;      // variáveis de movimentação para x e y
 
-/* The number of our GLUT window */
-int window; 
-
-/* rotation angle for the triangle. */
-float rtri = 0.0f;
-
-/* rotation angle for the quadrilateral. */
-float rquad = 0.0f;
-
-/* A general OpenGL initialization function.  Sets all of the initial parameters. */
-// We call this right after our OpenGL window is created.
-void InitGL(int Width, int Height)         
-{
-  // This Will Clear The Background Color To Black
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);     
-  glClearDepth(1.0);                // Enables Clearing Of The Depth Buffer
-  glDepthFunc(GL_LESS);                // The Type Of Depth Test To Do
-  glEnable(GL_DEPTH_TEST);            // Enables Depth Testing
-  glShadeModel(GL_SMOOTH);            // Enables Smooth Color Shading
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();                // Reset The Projection Matrix
-
-  gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);  
-
-  glMatrixMode(GL_MODELVIEW);
+void quadrado(){
+    glBegin(GL_QUADS);             //lBegin e glEnd delimitam os vértices que definem uma primitiva ou um grupo de primitivas semelhantes (definida como parâmetro).
+        glColor3f(0,1,0);          //adiciona cor ao quadrado
+        glVertex2f(-2,-2);         //adiciona um ponto na coordenada x, y que será usado para completar nosso quadrado
+        glVertex2f(-2,2);          //adiciona um ponto na coordenada x, y que será usado para completar nosso quadrado
+        glColor3f(1,0,0);          //adiciona cor ao quadrado
+        glVertex2f(2,2);           //adiciona um ponto na coordenada x, y que será usado para completar nosso quadrado
+        glVertex2f(2,-2);          //adiciona um ponto na coordenada x, y que será usado para completar nosso quadrado
+    glEnd();
 }
 
-/* The function called when our window is resized (which shouldn't happen, because we're fullscreen) */
-void ReSizeGLScene(int Width, int Height)
-{
-  if (Height==0)                // Prevent A Divide By Zero If The Window Is Too Small
-    Height=1;
 
-  glViewport(0, 0, Width, Height);        // Reset The Current Viewport And Perspective Transformation
+void desenhaObjeto(void){                 //função de desenho
+    glClear(GL_COLOR_BUFFER_BIT);         //buffer padrão; limpa a tela toda vez que a função é chamada
+	glMatrixMode(GL_PROJECTION);          //projeção dos pontos definidos no plano cartesiano
+    glLoadIdentity(); 				      //carrega a projeção
+    gluOrtho2D(-50,50,-50,50);            //define o tamanho do plano cartesiano
+	glMatrixMode(GL_MODELVIEW);           //projeção do tipo modelo
+    glLoadIdentity();                     //carrega essa identidade de projeção de modelo
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+    glPushMatrix();                           //insere a matriz de transformação corrente na pilha
+        glScalef(escala, escala, 0);          //chama a fução escala e passa como parâmetro o valor da escala ( as mesmas para x e y)
+        glRotatef(rotacao, 0,0,1);            //chama a fução rotação e passa como parâmetro o ângulo
+        glTranslatef(movex, movey,0);         //chama a fução de tranlação e passa como parâmetro o valor para transladar em x e y
+        quadrado();                           // chama a função que desenha um quadrado
+    glPopMatrix();                            //retira a matriz do topo da pilha e torna esta última a matriz de transformação corrente
 
-  gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);
-  glMatrixMode(GL_MODELVIEW);
+	glFlush();                                //carrega os comandos OpenGL (envia para o hardware os comandos, permitindo assim que os drivers GL iniciem o render)
 }
 
-float ballX = -0.5f;
-float ballY = 0.0f;
-float ballZ = 0.0f;
-
-void drawBall(void) {
-        glColor3f(0.0, 1.0, 0.0); //set ball colour
-        glTranslatef(ballX,ballY,ballZ); //moving it toward the screen a bit on creation
-        //glRotatef(ballX,ballX,ballY,ballZ);
-        glutSolidSphere (0.3, 20, 20); //create ball.
-        glTranslatef(ballX+1.5,ballY,ballZ); //moving it toward the screen a bit on creation
-        glutSolidSphere (0.3, 20, 20); //
-        }
-
-
-/* The main drawing function. */
-void DrawGLScene()
-{
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        // Clear The Screen And The Depth Buffer
-  glLoadIdentity();                // Reset The View
-
-  glTranslatef(rtri,0.0f,-6.0f);        // Move Left 1.5 Units And Into The Screen 6.0
-   
-  //glRotatef(rtri,1.0f,0.0f,0.0f);        // Rotate The Triangle On The Y axis
-  // draw a triangle (in smooth coloring mode)
-  glBegin(GL_POLYGON);                // start drawing a polygon
-  glColor3f(1.0f,0.0f,0.0f);            // Set The Color To Red
-  glVertex3f(-1.0f, 1.0f, 0.0f);        // Top left
-  glVertex3f(0.4f, 1.0f, 0.0f);
-  
-  glVertex3f(1.0f, 0.4f, 0.0f);
-  
-  glColor3f(0.0f,1.0f,0.0f);            // Set The Color To Green
-  glVertex3f( 1.0f,0.0f, 0.0f);        // Bottom Right
-  glColor3f(0.0f,0.0f,1.0f);            // Set The Color To Blue
-  glVertex3f(-1.0f,0.0f, 0.0f);// Bottom Left    
-
-  //glVertex3f();
-  glEnd();                    // we're done with the polygon (smooth color interpolation)
-  drawBall();
- 
-  rtri+=0.005f;                    // Increase The Rotation Variable For The Triangle
-  if(rtri>2)
-      rtri=-2.0f;
-  rquad-=15.0f;                    // Decrease The Rotation Variable For The Quad
-
-  // swap the buffers to display, since double buffering is used.
-  glutSwapBuffers();
-}
-
-/* The function called whenever a key is pressed. */
-void keyPressed(unsigned char key, int x, int y) 
-{
-    /* sleep to avoid thrashing this procedure */
-   // usleep(100);
-
-    /* If escape is pressed, kill everything. */
-    if (key == ESCAPE) 
-    { 
-    /* shut down our window */
-    glutDestroyWindow(window);
-   
-    /* exit the program...normal termination. */
-    exit(0);                  
+/*função que atriui valores as nossas variáveis de escala e rotação (dependendo da tecla pressionada) */
+void teclas(unsigned char tecla, GLint x, GLint y){
+    switch(tecla){
+        case '+': escala++;         // adiciona 1 ao valor de escala
+        break;
+        case '-': escala--;         // remove 1 ao valor de escala
+        break;
+        case '1': rotacao-=10;      // rotaciona o objeto no sentido horário (diminui o ângulo em 10)
+        break;
+        case '2': rotacao+=10;      // rotaciona o objeto no sentido anti-horário (aumenta o ângulo em 10)
+        break;
     }
+    glutPostRedisplay();            //redesenha a cena que está na janela
 }
 
-int main(int argc, char **argv) 
-{  
-  glutInit(&argc, argv);  
+/*função que atriui valores as nossas variáveis de movimentação x e y (dependendo da tecla pressionada) */
+void setasDirecionais(GLint tecla, GLint x, GLint y){
+    switch(tecla){
+        case GLUT_KEY_LEFT: movex--;               // move nosso objeto para a esquerda
+        break;
+        case GLUT_KEY_RIGHT: movex++;              // move nosso objeto para a direita
+        break;
+        case GLUT_KEY_UP: movey++;                 // move nosso objeto para cima
+        break;
+        case GLUT_KEY_DOWN: movey--;               // move nosso objeto para baixo
+        break;
+    }
+    glutPostRedisplay();
+}
 
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);  
-
-  /* get a 640 x 480 window */
-  glutInitWindowSize(640, 480);  
-
-  /* the window starts at the upper left corner of the screen */
-  glutInitWindowPosition(0, 0);  
-
-  /* Open a window */  
-  window = glutCreateWindow("Moving Car");  
-
-  /* Register the function to do all our OpenGL drawing. */
-  glutDisplayFunc(&DrawGLScene);  
-
-  /* Go fullscreen.  This is as soon as possible. */
-  //glutFullScreen();
-
-  /* Even if there are no events, redraw our gl scene. */
-  glutIdleFunc(&DrawGLScene);
-
-  /* Register the function called when our window is resized. */
-  glutReshapeFunc(&ReSizeGLScene);
-
-  /* Register the function called when the keyboard is pressed. */
-  glutKeyboardFunc(&keyPressed);
-
-  /* Initialize our window. */
-  InitGL(640, 480);
-  
-  /* Start Event Processing Engine */  
-  glutMainLoop();  
-
-  return 1;
+int main(void){
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);                        // somente um buffer | sistema de cores RGB
+    glutInitWindowSize(800,600);                                        // define o tamanho da janela
+     glutInitWindowPosition((glutGet(GLUT_SCREEN_WIDTH)-960)/2,         // medidas usadas para posicionar a janela no meio
+                           (glutGet(GLUT_SCREEN_HEIGHT)-540)/2);        // da tela - isso depende da resolução do monitor
+	glutCreateWindow("Exemplo - Teclado");                              // permite a criação de uma janela
+    glutDisplayFunc(desenhaObjeto);                                     // função de callback - chama a função Desenha
+    glutKeyboardFunc(teclas);                                           // Chamada da função teclado (cada pressionamento gera uma chamada do teclado)
+    glutSpecialFunc(setasDirecionais);                                  // Chamada da função teclado especial (para quando as teclas direcionais são pressionadas)
+    glClearColor(1,1,1,0);                                              // informa a cor de fundo da tela
+    glutMainLoop();                                                     // loop infinito - escuta as informações do sistema até encerrar a aplicação
+    return 0;                                                           // retorna zero
 }
